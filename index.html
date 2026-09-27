@@ -45,12 +45,15 @@
 
   <section class="card" id="step4" hidden>
     <h2><span class="n">4</span>Export</h2>
+    <label class="field" for="tableName">What should this color table be called?</label>
     <div class="row">
-      <input id="tableName" type="text" value="MyColorTable" spellcheck="false">
-      <button id="csvBtn">Download color table (.csv)</button>
-      <button id="provBtn" class="secondary">Download provenance (.json)</button>
+      <input id="tableName" type="text" value="" placeholder="e.g. Mus_musculus_brain" spellcheck="false" autocomplete="off"><span class="suffix">.csv</span>
     </div>
-    <p class="hint" id="nameHint">Letters, digits, periods, hyphens and underscores only (same rule as the MorphoDepot extension).</p>
+    <p class="hint" id="nameHint"></p>
+    <div class="row">
+      <button id="csvBtn" disabled>Download color table (.csv)</button>
+      <button id="provBtn" class="secondary" disabled>Download provenance (.json)</button>
+    </div>
     <details><summary>Preview color table</summary><pre id="csvPreview"></pre></details>
   </section>
 </main>

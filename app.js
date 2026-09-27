@@ -185,6 +185,7 @@ function renderResults() {
   $("#step4").hidden = false;
   $("#results tbody").innerHTML = rows.map((r, i) => `<tr>${rowHtml(r, i)}</tr>`).join("");
   renderSummary();
+  suggestTableName();
   renderExport();
 }
 
@@ -234,7 +235,7 @@ function buildProvenance() {
   return {
     tool: "MorphoDepot term-lookup prototype (SlicerMorphoDepot #237)",
     generated: new Date().toISOString(),
-    colorTable: `${$("#tableName").value.trim()}.csv`,
+    colorTable: `${tableName()}.csv`,
     specimen: lookupMeta.nonBiological ? { nonBiological: true } : {
       input: sp.input,
       gbif: { scientificName: sp.gbif.scientificName, rank: sp.gbif.rank, status: sp.gbif.status, matchType: sp.gbif.matchType,
@@ -258,11 +259,25 @@ function buildProvenance() {
   };
 }
 
+// The table name the user typed, without a trailing ".csv" if they added one.
+const tableName = () => $("#tableName").value.trim().replace(/\.csv$/i, "");
+
+const NAME_HINT = "This becomes the file name and the color table's name in Slicer and in the repository.";
 function renderExport() {
-  const ok = VALID_NAME.test($("#tableName").value.trim());
-  $("#nameHint").classList.toggle("bad", !ok);
+  const name = tableName();
+  const ok = VALID_NAME.test(name);
+  $("#nameHint").textContent = !name ? `${NAME_HINT} Enter a name to enable the downloads.`
+    : ok ? NAME_HINT
+    : "Use only letters, digits, periods, hyphens and underscores, with no spaces (the same rule as the MorphoDepot extension).";
+  $("#nameHint").classList.toggle("bad", !!name && !ok);
   $("#csvBtn").disabled = $("#provBtn").disabled = !ok;
   $("#csvPreview").textContent = buildCsv();
+}
+
+// Suggest (never fill in) a name based on the specimen.
+function suggestTableName() {
+  const base = species && species.ok ? (species.gbif.canonicalName || species.input).replace(/[^A-Za-z0-9]+/g, "_") : "MyScan";
+  $("#tableName").placeholder = `e.g. ${base}_segments`;
 }
 
 function download(filename, text, type) {
@@ -285,12 +300,13 @@ $("#nonbio").addEventListener("change", () => {
 });
 $("#lookupBtn").addEventListener("click", lookup);
 $("#tableName").addEventListener("input", renderExport);
-$("#csvBtn").addEventListener("click", () => download(`${$("#tableName").value.trim()}.csv`, buildCsv(), "text/csv"));
-$("#provBtn").addEventListener("click", () => download(`${$("#tableName").value.trim()}.provenance.json`, JSON.stringify(buildProvenance(), null, 2), "application/json"));
+$("#csvBtn").addEventListener("click", () => download(`${tableName()}.csv`, buildCsv(), "text/csv"));
+$("#provBtn").addEventListener("click", () => download(`${tableName()}.provenance.json`, JSON.stringify(buildProvenance(), null, 2), "application/json"));
 
-// Shareable test links: ?species=Chelydra+serpentina&terms=carapace|plastron (&nonbio=1, &outside=1)
+// Shareable test links: ?species=Chelydra+serpentina&terms=carapace|plastron (&name=..., &nonbio=1, &outside=1)
 (async () => {
   const p = new URLSearchParams(location.search);
+  if (p.get("name")) $("#tableName").value = p.get("name");
   if (p.get("terms")) $("#terms").value = p.get("terms").split("|").join("\n");
   if (p.get("outside")) $("#outside").checked = true;
   if (p.get("nonbio")) { $("#nonbio").checked = true; $("#nonbio").dispatchEvent(new Event("change")); }
