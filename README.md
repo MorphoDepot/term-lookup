@@ -56,9 +56,11 @@ A non-biological specimen skips the lookup, and every row gets the generic term.
   each can be changed. The Name column is what you typed, which is what Slicer shows as the segment
   name. Tick **Use ontology term as the label** on a row to use the term's label instead: for example,
   "atrium" becomes "cardiac atrium". Unticking restores what you typed.
-- **`<name>.provenance.json`**: for each row, whether the term was matched, picked by the user,
-  reverted to generic, or had no match. It also records the specimen's GBIF and NCBI placement and the
-  ontologies searched.
+- **`<name>.terminology_provenance.json`**: for each row, whether the term was matched, picked by the
+  user, reverted to generic, or had no match, plus the typed name when the ontology label replaced it.
+  It also records the specimen's GBIF and NCBI placement and the ontologies searched. The file begins
+  with `"kind": "terminology-provenance"` and a `schemaVersion`, so tools can tell it apart from other
+  provenance records.
 
 ## Known limits
 
