@@ -29,9 +29,19 @@ is stored.
    mandible and heart to Vertebrata, and so on. Matches that don't apply to the specimen are rejected,
    and the page shows the reason.
 
-A term is picked automatically only when it is an exact match and valid for the taxon. When several
-qualify, the order of preference is: exact label, then synonym; then taxon confirmed; then the most
-specific ontology. Single-genus model-organism ontologies (MA, EMAPA, ZFA, XAO, FBbt) rank below Uberon.
+A term is picked automatically only when it is an exact match (label or synonym) and valid for the
+taxon. When several qualify, the ontology decides first:
+
+1. clade ontologies, such as HAO and AISM for insects, PO for plants, SPD for spiders;
+2. Uberon;
+3. single-genus model-organism ontologies (MA, EMAPA, ZFA, XAO, FBbt, WBbt).
+
+So a mouse "4th ventricle" gets Uberon's *fourth ventricle*, which matches through its synonym, rather
+than MA's or EMAPA's *4th ventricle*. Uberon cross-references those terms (UBERON:0002422 lists
+MA:0000196 and EMAPA:16917), so nothing is lost, and tables stay comparable across species. Within one
+ontology, a label match beats a synonym match. The model-organism terms stay in the list as
+alternatives.
+
 Partial and unverified matches are listed but never picked automatically. Any row can be reverted to
 the generic term SCT 85756007 "Tissue".
 
