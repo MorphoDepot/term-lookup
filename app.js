@@ -233,6 +233,8 @@ function buildCsv() {
 function buildProvenance() {
   const sp = species;
   return {
+    kind: "terminology-provenance",
+    schemaVersion: 1,
     tool: "MorphoDepot term-lookup prototype (SlicerMorphoDepot #237)",
     generated: new Date().toISOString(),
     colorTable: `${tableName()}.csv`,
@@ -301,7 +303,7 @@ $("#nonbio").addEventListener("change", () => {
 $("#lookupBtn").addEventListener("click", lookup);
 $("#tableName").addEventListener("input", renderExport);
 $("#csvBtn").addEventListener("click", () => download(`${tableName()}.csv`, buildCsv(), "text/csv"));
-$("#provBtn").addEventListener("click", () => download(`${tableName()}.provenance.json`, JSON.stringify(buildProvenance(), null, 2), "application/json"));
+$("#provBtn").addEventListener("click", () => download(`${tableName()}.terminology_provenance.json`, JSON.stringify(buildProvenance(), null, 2), "application/json"));
 
 // Shareable test links: ?species=Chelydra+serpentina&terms=carapace|plastron (&name=..., &nonbio=1, &outside=1)
 (async () => {
