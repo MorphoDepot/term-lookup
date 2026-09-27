@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Term Lookup Prototype</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Color-table term lookup</h1>
+  <p class="sub">Prototype. Matches segment names to anatomy-ontology terms using the specimen's taxonomy, then writes a Slicer color table.</p>
+</header>
+<main>
+  <section class="card" id="step1">
+    <h2><span class="n">1</span>Specimen</h2>
+    <div class="row">
+      <input id="species" type="text" placeholder="Species or a higher group, e.g. Chelydra serpentina" autocomplete="off" spellcheck="false">
+      <button id="resolveBtn">Resolve</button>
+    </div>
+    <label class="check"><input type="checkbox" id="nonbio"> Non-biological specimen (no species; every segment gets the generic term)</label>
+    <div id="speciesOut"></div>
+  </section>
+
+  <section class="card" id="step2">
+    <h2><span class="n">2</span>Segment names</h2>
+    <textarea id="terms" rows="8" spellcheck="false" placeholder="One name per line&#10;carapace&#10;plastron&#10;skull"></textarea>
+    <div class="row between">
+      <label class="check"><input type="checkbox" id="outside"> Also list matches from ontologies outside this taxon (never auto-selected)</label>
+      <button id="lookupBtn" disabled>Look up terms</button>
+    </div>
+    <div id="lookupStatus"></div>
+  </section>
+
+  <section class="card" id="step3" hidden>
+    <h2><span class="n">3</span>Review</h2>
+    <div id="summary"></div>
+    <div class="tablewrap">
+      <table id="results">
+        <thead><tr><th>#</th><th>Color</th><th>Name</th><th>Term</th><th>Status</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" id="step4" hidden>
+    <h2><span class="n">4</span>Export</h2>
+    <div class="row">
+      <input id="tableName" type="text" value="MyColorTable" spellcheck="false">
+      <button id="csvBtn">Download color table (.csv)</button>
+      <button id="provBtn" class="secondary">Download provenance (.json)</button>
+    </div>
+    <p class="hint" id="nameHint">Letters, digits, periods, hyphens and underscores only (same rule as the MorphoDepot extension).</p>
+    <details><summary>Preview color table</summary><pre id="csvPreview"></pre></details>
+  </section>
+</main>
+<footer>
+  <p>Data from <a href="https://www.gbif.org" target="_blank" rel="noopener">GBIF</a>,
+    <a href="https://www.ncbi.nlm.nih.gov/taxonomy" target="_blank" rel="noopener">NCBI Taxonomy</a>,
+    the <a href="https://obofoundry.org" target="_blank" rel="noopener">OBO Foundry</a>,
+    <a href="https://www.ebi.ac.uk/ols4" target="_blank" rel="noopener">OLS</a> and
+    <a href="https://github.com/INCATools/ubergraph" target="_blank" rel="noopener">Ubergraph</a>, queried from your browser.
+    Nothing you type is stored.
+    <a href="https://github.com/MorphoDepot/term-lookup#readme" target="_blank" rel="noopener">How it works</a> ·
+    <a href="https://github.com/SlicerMorph/SlicerMorphoDepot/issues/237" target="_blank" rel="noopener">Feedback</a></p>
+</footer>
+<script src="lookup.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "_comment": "Taxa for anatomy ontologies that the OBO Foundry registry leaves blank (or that we judge too narrow). Each entry replaces the registry's taxon for that ontology. Candidates for upstream PRs to github.com/OBOFoundry/OBOFoundry.github.io/tree/master/ontology. NCBI IDs verified 2026-09-27.",
+  "ontologies": {
+    "aism":  {"taxon": "NCBITaxon:50557",  "label": "Insecta",       "note": "Registry has no taxon. AISM is the insect skeletomuscular umbrella ontology."},
+    "colao": {"taxon": "NCBITaxon:7041",   "label": "Coleoptera",    "note": "Registry has no taxon. Built on AISM."},
+    "lepao": {"taxon": "NCBITaxon:7088",   "label": "Lepidoptera",   "note": "Registry has no taxon. Built on AISM."},
+    "clao":  {"taxon": "NCBITaxon:30001",  "label": "Collembola",    "note": "Registry has no taxon."},
+    "oarcs": {"taxon": "NCBITaxon:6656",   "label": "Arthropoda",    "note": "Registry has no taxon. Circulatory system only."},
+    "ecao":  {"taxon": "NCBITaxon:7586",   "label": "Echinodermata", "note": "Registry has no taxon."},
+    "amphx": {"taxon": "NCBITaxon:7737",   "label": "Branchiostoma", "note": "Registry has no taxon."},
+    "plana": {"taxon": "NCBITaxon:79327",  "label": "Schmidtea mediterranea", "note": "Registry has no taxon."},
+    "clyh":  {"taxon": "NCBITaxon:252671", "label": "Clytia hemisphaerica",   "note": "Registry has no taxon."},
+    "hao":   {"taxon": "NCBITaxon:50557",  "label": "Insecta",       "note": "JUDGMENT CALL: registry says Hymenoptera, but HAO matched 6/7 beetle terms. Delete this entry to go back to Hymenoptera only."}
+  }
+}
