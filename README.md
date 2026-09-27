@@ -43,7 +43,9 @@ A non-biological specimen skips the lookup, and every row gets the generic term.
   [terms-and-colors](https://github.com/SlicerMorph/terms-and-colors) tables. Matched rows use Category
   SCT 123037004 "Anatomical Structure" and Type = ontology prefix, term link and label. Generic rows use
   SCT 85756007 "Tissue" for both. Colors follow Slicer's built-in "Labels" table by label value, and
-  each can be changed.
+  each can be changed. The Name column is what you typed, which is what Slicer shows as the segment
+  name. Tick **Use ontology term as the label** on a row to use the term's label instead: for example,
+  "atrium" becomes "cardiac atrium". Unticking restores what you typed.
 - **`<name>.provenance.json`**: for each row, whether the term was matched, picked by the user,
   reverted to generic, or had no match. It also records the specimen's GBIF and NCBI placement and the
   ontologies searched.

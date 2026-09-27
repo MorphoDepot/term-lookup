@@ -103,6 +103,10 @@ async function lookup() {
 
 // ------------------------------------------------------------------ step 3
 const chosen = (r) => r.candidates.find((c) => c.iri === r.choice) || null;
+// r.name is always what the user typed; with "use ontology term as the label" ticked (and a term
+// chosen) the table's Name is the term's label instead. Unticking brings the typed name back.
+const usesTermName = (r) => !!(r.useTermName && chosen(r));
+const labelFor = (r) => (usesTermName(r) ? chosen(r).label : r.name);
 
 function rowState(r) {
   if (lookupMeta.nonBiological) return ["non-biological", "Generic", "grey"];
@@ -154,9 +158,13 @@ function rowHtml(r, i) {
   }
   const rej = r.rejected.length ? `<details class="rej"><summary>${r.rejected.length} match${r.rejected.length > 1 ? "es" : ""} rejected for this taxon</summary><ul>${r.rejected.map((x) => `<li>${esc(x.label)} — ${esc(x.oboId)}: ${esc(x.note)}</li>`).join("")}</ul></details>` : "";
   const [, label, cls] = rowState(r);
+  const useTerm = usesTermName(r);
+  const useTermBox = lookupMeta.nonBiological ? "" : `<label class="useterm"${c ? "" : ` title="Choose an ontology term first"`}>
+      <input type="checkbox" class="useterm" data-i="${i}"${useTerm ? " checked" : ""}${c ? "" : " disabled"}> Use ontology term as the label</label>
+      ${useTerm && r.name !== c.label ? `<div class="detail">You entered “${esc(r.name)}”.</div>` : ""}`;
   return `<td class="num">${i + 1}</td>
     <td><input type="color" class="color" data-i="${i}" value="${r.color}"></td>
-    <td><input type="text" class="name" data-i="${i}" value="${esc(r.name)}" spellcheck="false"></td>
+    <td><input type="text" class="name" data-i="${i}" value="${esc(labelFor(r))}" spellcheck="false"${useTerm ? " readonly" : ""}>${useTermBox}</td>
     <td>${select}<div class="detail">${detail}</div>${actions ? `<div class="detail">${actions}</div>` : ""}${rej}</td>
     <td><span class="badge ${cls}">${label}</span></td>`;
 }
@@ -189,10 +197,11 @@ function rerenderRow(i) {
 $("#results").addEventListener("change", (e) => {
   const i = +e.target.dataset.i;
   if (e.target.classList.contains("choice")) { rows[i].choice = e.target.value; rerenderRow(i); }
+  if (e.target.classList.contains("useterm")) { rows[i].useTermName = e.target.checked; rerenderRow(i); }
 });
 $("#results").addEventListener("input", (e) => {
   const i = +e.target.dataset.i;
-  if (e.target.classList.contains("name")) { rows[i].name = e.target.value; renderExport(); }
+  if (e.target.classList.contains("name") && !e.target.readOnly) { rows[i].name = e.target.value; renderExport(); }
   if (e.target.classList.contains("color")) { rows[i].color = e.target.value; renderExport(); }
 });
 $("#results").addEventListener("click", (e) => {
@@ -214,7 +223,7 @@ function buildCsv() {
   const lines = [CSV_HEADER];
   rows.forEach((r, i) => {
     const [R, G, B] = hexToRgb(r.color), [cat, type] = codesFor(r);
-    lines.push([i + 1, r.name, R, G, B, 255, cat.scheme, cat.code, cat.meaning, type.scheme, type.code, type.meaning,
+    lines.push([i + 1, labelFor(r), R, G, B, 255, cat.scheme, cat.code, cat.meaning, type.scheme, type.code, type.meaning,
       "", "", "", "", "", "", "", "", ""].map(csvField).join(","));
   });
   return lines.join("\n") + "\n";
@@ -237,7 +246,8 @@ function buildProvenance() {
     rows: rows.map((r, i) => {
       const c = chosen(r), auto = r.candidates.find((x) => x.iri === r.auto);
       return {
-        label: i + 1, name: r.name, status: rowState(r)[0],
+        label: i + 1, name: labelFor(r), enteredName: r.name, nameFrom: usesTermName(r) ? "ontology-term" : "entered",
+        status: rowState(r)[0],
         term: c ? { ontology: c.ontology, id: c.oboId, iri: c.iri, label: c.label, match: c.match, taxonStatus: c.status, taxonNote: c.note }
                 : { generic: true, scheme: GENERIC.scheme, code: GENERIC.code, meaning: GENERIC.meaning },
         suggested: auto ? { id: auto.oboId, label: auto.label } : null,
