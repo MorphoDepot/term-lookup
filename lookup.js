@@ -285,6 +285,27 @@ window.TermLookup = (() => {
     return ["incompatible", `Uberon restricts this term to ${tl}; the specimen is not in ${tl}.`];
   }
 
+  // Ontology preference among matches: clade ontologies (HAO, AISM, PO, SPD...) first, then Uberon,
+  // then single-genus model-organism ontologies (MA, EMAPA, ZFA, XAO, FBbt...). Uberon cross-references
+  // the model-organism terms, so preferring it loses nothing and keeps tables comparable across species.
+  function ontologyTier(id, o) {
+    if (id === "uberon") return 1;
+    return o.modelOrganism ? 2 : 0;
+  }
+
+  // Exact before partial; taxon-valid before unverified/outside; then ontology tier; then label before
+  // synonym; then confirmed-taxon before no-restriction; then the more specific ontology.
+  const VALIDITY = { ok: 0, ontology: 0, unrestricted: 0, unchecked: 0, unverified: 1, outside: 2 };
+  function compareCandidates(a, b) {
+    return (a.match === "partial") - (b.match === "partial")
+      || VALIDITY[a.status] - VALIDITY[b.status]
+      || a.tier - b.tier
+      || MATCH_RANK[a.match] - MATCH_RANK[b.match]
+      || STATUS_RANK[a.status] - STATUS_RANK[b.status]
+      || b.pref - a.pref
+      || a.label.localeCompare(b.label);
+  }
+
   async function lookupTerms(terms, species, includeOutside, onProgress = () => {}) {
     const anchor = species.ncbi;
     const onts = Object.fromEntries((species.ontologies || []).map((o) => [o.id, o]));
@@ -319,6 +340,7 @@ window.TermLookup = (() => {
       for (const c of found[k]) {
         const o = onts[c.ontology] || reg[c.ontology] || {};
         c.pref = o.pref ?? -1;
+        c.tier = ontologyTier(c.ontology, o);
         c.ontologyTaxon = o.taxonLabel || null;
         if (c.outside) {
           [c.status, c.note] = ["outside", `${c.prefix} covers ${o.taxonLabel || "unspecified taxa"}, outside this specimen's lineage.`];
@@ -329,8 +351,7 @@ window.TermLookup = (() => {
         }
         (c.status === "incompatible" ? rejected : keep).push(c);
       }
-      keep.sort((a, b) => MATCH_RANK[a.match] - MATCH_RANK[b.match] || STATUS_RANK[a.status] - STATUS_RANK[b.status]
-        || b.pref - a.pref || a.label.localeCompare(b.label));
+      keep.sort(compareCandidates);
       const auto = keep.find((c) => c.match !== "partial" && AUTO_OK.has(c.status) && !c.outside);
       const direct = new Set(keep.filter((c) => c.match !== "partial" && !c.outside && AUTO_OK.has(c.status)).map((c) => c.ontology));
       for (const oid of direct) coverage[oid] = (coverage[oid] || 0) + 1;
