@@ -5,6 +5,12 @@ const ANATOMICAL_STRUCTURE = { scheme: "SCT", code: "123037004", meaning: "Anato
 const CSV_HEADER = "LabelValue,Name,Color_R,Color_G,Color_B,Color_A,Category_CodingScheme,Category_CodeValue,Category_CodeMeaning,Type_CodingScheme,Type_CodeValue,Type_CodeMeaning,TypeModifier_CodingScheme,TypeModifier_CodeValue,TypeModifier_CodeMeaning,Region_CodingScheme,Region_CodeValue,Region_CodeMeaning,RegionModifier_CodingScheme,RegionModifier_CodeValue,RegionModifier_CodeMeaning";
 const VALID_NAME = /^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$/;
 
+// ?embedded=1: shown inside 3D Slicer's built-in browser by the MorphoDepot extension, which reads the
+// finished table with TermLookupExport() (below). Downloads are hidden and links open in the system
+// browser (Slicer ignores target="_blank").
+const EMBEDDED = new URLSearchParams(location.search).get("embedded") === "1";
+const linkTarget = EMBEDDED ? "" : ' target="_blank" rel="noopener"';
+
 let species = null;   // TermLookup.resolveName result
 let lookupMeta = null; // TermLookup.lookupTerms result (or {nonBiological:true})
 let rows = [];        // {name, color, candidates, rejected, auto, choice}
@@ -96,6 +102,7 @@ async function lookup() {
   if (!out.ok) { $("#lookupStatus").innerHTML = `<div class="box err">${esc(out.error)}</div>`; return; }
   $("#lookupStatus").innerHTML = "";
   lookupMeta = out;
+  lookupMeta.speciesInput = species.input;  // the species these terms were matched for
   rows = out.terms.map((t, i) => ({ name: t.term, color: palette(i), candidates: t.candidates, rejected: t.rejected,
     auto: t.autoPick || "generic", choice: t.autoPick || "generic" }));
   renderResults();
@@ -142,7 +149,7 @@ function rowHtml(r, i) {
   let detail = "";
   if (c) {
     const olsUrl = `https://www.ebi.ac.uk/ols4/ontologies/${encodeURIComponent(c.ontology)}/classes/${encodeURIComponent(encodeURIComponent(c.iri))}`;
-    detail = `${c.definition ? esc(c.definition.length > 240 ? c.definition.slice(0, 240) + "…" : c.definition) + " " : ""}<a href="${olsUrl}" target="_blank" rel="noopener">View in OLS</a><span class="note">${esc(c.note)}</span>`;
+    detail = `${c.definition ? esc(c.definition.length > 240 ? c.definition.slice(0, 240) + "…" : c.definition) + " " : ""}<a href="${olsUrl}"${linkTarget}>View in OLS</a><span class="note">${esc(c.note)}</span>`;
   } else if (!lookupMeta.nonBiological) {
     const [state] = rowState(r);
     detail = {
@@ -302,6 +309,28 @@ $("#lookupBtn").addEventListener("click", lookup);
 $("#tableName").addEventListener("input", renderExport);
 $("#csvBtn").addEventListener("click", () => download(`${tableName()}.csv`, buildCsv(), "text/csv"));
 $("#provBtn").addEventListener("click", () => download(`${tableName()}.provenance.json`, JSON.stringify(buildProvenance(), null, 2), "application/json"));
+
+// For the MorphoDepot extension: the finished table, read with evalJS when the user clicks "Use in
+// Slicer". `ready` stays false (with a `reason`) until a lookup has run and the name is valid.
+// `species` is the name the lookup was run for, so the extension can warn if the form differs.
+window.TermLookupExport = () => {
+  const name = tableName();
+  let reason = "";
+  if (!lookupMeta || !rows.length) reason = "Look up the segment names first.";
+  else if (!VALID_NAME.test(name)) reason = "Enter a valid name for the color table.";
+  return {
+    ready: !reason, reason, name,
+    csv: reason ? "" : buildCsv(),
+    provenance: reason ? null : buildProvenance(),
+    species: (lookupMeta && lookupMeta.speciesInput) || null,
+    nonBiological: !!(lookupMeta && lookupMeta.nonBiological),
+  };
+};
+
+if (EMBEDDED) {
+  document.body.classList.add("embedded");
+  document.querySelectorAll("a[target]").forEach((a) => a.removeAttribute("target"));
+}
 
 // Shareable test links: ?species=Chelydra+serpentina&terms=carapace|plastron (&name=..., &nonbio=1, &outside=1)
 (async () => {

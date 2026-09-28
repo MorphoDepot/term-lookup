@@ -73,6 +73,15 @@ A non-biological specimen skips the lookup, and every row gets the generic term.
 Links can fill in the form and run it, for example
 `?species=Daphnia%20magna&terms=carapace|compound%20eye|heart` (add `&outside=1` or `&nonbio=1`).
 
+## Inside 3D Slicer
+
+The MorphoDepot extension opens this page in Slicer's built-in browser with `embedded=1` plus
+`species=`, `terms=` and `name=` ([SlicerMorphoDepot#238](https://github.com/SlicerMorph/SlicerMorphoDepot/issues/238)).
+In embedded mode the download buttons are hidden, and links open in the system browser. When the user
+clicks **Use in Slicer**, the extension reads the result with `window.TermLookupExport()`, which returns
+`{ready, reason, name, csv, provenance, species, nonBiological}`. `ready` stays false, with a `reason`,
+until a lookup has run and the table has a valid name.
+
 ## Run locally
 
     python3 -m http.server 8000
