@@ -20,7 +20,10 @@ window.TermLookup = (() => {
   const KINGDOM_TO_NCBI = { Animalia: "Metazoa", Plantae: "Viridiplantae" };
   const GBIF_RANKS = ["species", "genus", "family", "order", "class", "phylum", "kingdom"];
   const STATUS_RANK = { ok: 0, ontology: 0, unrestricted: 1, unchecked: 1, unverified: 2, outside: 3 };
-  const MATCH_RANK = { label: 0, synonym: 1, partial: 2 };
+  const MATCH_RANK = { label: 0, qualified: 0, synonym: 1, partial: 2 };
+  // AISM labels many general terms with an "insect" prefix ("insect mandible", "insect head") and gives
+  // no unprefixed synonym. Typing "mandible" matches "insect mandible" as a label ("qualified" match).
+  const QUALIFIER = { aism: "insect" };
   const AUTO_OK = new Set(["ok", "ontology", "unrestricted", "unchecked"]);
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -208,14 +211,18 @@ window.TermLookup = (() => {
       for (const d of docs) {
         if (cands.has(d.iri)) continue;
         const label = d.label || "";
-        const match = kind === "partial" ? "partial" : (label.toLowerCase() === term.toLowerCase() ? "label" : "synonym");
+        const match = kind === "exact" ? (label.toLowerCase() === term.toLowerCase() ? "label" : "synonym") : kind;
         cands.set(d.iri, { iri: d.iri, oboId: d.obo_id, label, ontology: d.ontology_name, prefix: d.ontology_prefix,
           definition: (d.description || [""])[0], synonyms: (d.synonym || []).slice(0, 6), match, outside: isOutside });
       }
     };
     if (inside.length) {
-      const [exact, partial] = await Promise.all([olsSearch(term, inside, true, 50), olsSearch(term, inside, false, 25)]);
+      const quals = inside.filter((i) => QUALIFIER[i] && !term.toLowerCase().startsWith(`${QUALIFIER[i]} `));
+      const [exact, partial, ...qualified] = await Promise.all([olsSearch(term, inside, true, 50),
+        olsSearch(term, inside, false, 25), ...quals.map((i) => olsSearch(`${QUALIFIER[i]} ${term}`, [i], true, 5))]);
       add(exact, "exact", false);
+      quals.forEach((i, k) => add(qualified[k].filter((d) =>
+        (d.label || "").toLowerCase() === `${QUALIFIER[i]} ${term}`.toLowerCase()), "qualified", false));
       add(partial.slice(0, 10), "partial", false);
     }
     if (outside.length) add(await olsSearch(term, outside, true, 50), "exact", true);
