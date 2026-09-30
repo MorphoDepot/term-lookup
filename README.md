@@ -24,7 +24,9 @@ is stored.
    comes from the [OBO Foundry registry](https://obofoundry.org). Where the registry leaves it blank,
    `ontology_taxa_overrides.json` fills it in.
 4. **OLS** (EBI's ontology search) searches each name in those ontologies. Only the ontology that
-   defines a term counts. Matches can be exact (label or synonym) or partial.
+   defines a term counts. Matches can be exact (label or synonym) or partial. AISM names many general
+   insect terms with an "insect" prefix, such as *insect mandible* and *insect head*, so "mandible"
+   also matches *insect mandible* as a label match.
 5. **Ubergraph** checks each Uberon match against the specimen. Carapace is limited to Testudines,
    mandible and heart to Vertebrata, and so on. Matches that don't apply to the specimen are rejected,
    and the page shows the reason.
@@ -32,7 +34,9 @@ is stored.
 A term is picked automatically only when it is an exact match (label or synonym) and valid for the
 taxon. When several qualify, the ontology decides first:
 
-1. clade ontologies, such as HAO and AISM for insects, PO for plants, SPD for spiders;
+1. clade ontologies, such as AISM for insects, PO for plants, SPD for spiders. An order-level
+   ontology that covers the specimen (COLAO for beetles, LEPAO for moths and butterflies, HAO for
+   Hymenoptera) wins over AISM when both match equally well;
 2. Uberon;
 3. single-genus model-organism ontologies (MA, EMAPA, ZFA, XAO, FBbt, WBbt).
 
